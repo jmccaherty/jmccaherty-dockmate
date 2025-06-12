@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import uuid
 from datetime import datetime, timedelta
+import streamlit.components.v1 as components
 
 # --- Initialization ---
 if "tickets" not in st.session_state:
@@ -18,7 +19,7 @@ vendors = {
 def is_available(vendor, date):
     return date.weekday() in vendors[vendor]["available_days"]
 
-def get_overlapping_dates(selected_services, start_date, days_range=14):
+def get_overlapping_dates(selected_services, start_date, days_range=30):
     available_dates = []
     for i in range(days_range):
         check_date = start_date + timedelta(days=i)
@@ -44,15 +45,28 @@ with st.form("service_form"):
 
     available_dates = []
     selected_service_date = None
+    today = datetime.today()
 
     if selected_services:
-        today = datetime.today()
         available_dates = get_overlapping_dates(selected_services, today)
+
+        # --- Calendar UI ---
+        st.subheader("Available Dates Calendar")
+        calendar_html = "<style>.calendar-day{display:inline-block;width:100px;text-align:center;padding:5px;margin:2px;border-radius:8px;font-weight:bold;}</style><div>"
+        for i in range(30):
+            day = today + timedelta(days=i)
+            day_str = day.strftime("%Y-%m-%d")
+            if day in available_dates:
+                calendar_html += f'<div class="calendar-day" style="background-color:lightgreen;">{day_str}</div>'
+            else:
+                calendar_html += f'<div class="calendar-day" style="background-color:#f99;">{day_str}</div>'
+        calendar_html += "</div><br>"
+        components.html(calendar_html, height=300)
 
         if available_dates:
             selected_service_date = st.selectbox("Select Available Date", available_dates)
         else:
-            st.warning("No overlapping dates available within the next 14 days for the selected services.")
+            st.warning("No overlapping dates available within the next 30 days for the selected services.")
 
     submitted = st.form_submit_button("Submit Service Request")
 
@@ -79,4 +93,5 @@ if st.session_state.tickets:
     st.dataframe(df, use_container_width=True)
 
 st.caption("This is a demo application. Payment integration and vendor portals would be added in full version.")
+
 
