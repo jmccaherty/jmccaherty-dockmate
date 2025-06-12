@@ -16,7 +16,7 @@ vendors = {
 def is_available(vendor, date):
     return date.weekday() in vendors[vendor]["available_days"]
 
-st.title("DockMate: Marina Service Coordination Demo")
+st.title("DockMate: Marine Service Made Easy")
 st.header("Create a Service Ticket")
 boat_name = st.text_input("Boat Name")
 cradle_id = st.text_input("Cradle ID")
