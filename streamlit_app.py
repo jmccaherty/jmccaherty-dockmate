@@ -35,7 +35,6 @@ st.header("Create a New Service Ticket")
 with st.form("service_form"):
     boat_name = st.text_input("Boat Name")
     cradle_id = st.text_input("Cradle ID")
-    start_search_date = st.date_input("Preferred Start Date", min_value=datetime.today())
 
     selected_services = []
     st.subheader("Select Required Services")
@@ -43,12 +42,17 @@ with st.form("service_form"):
         if st.checkbox(vendor):
             selected_services.append(vendor)
 
-    available_dates = get_overlapping_dates(selected_services, start_search_date) if selected_services else []
+    available_dates = []
     selected_service_date = None
-    if available_dates:
-        selected_service_date = st.selectbox("Select Available Date", available_dates)
-    elif selected_services:
-        st.warning("No overlapping dates available within the next 14 days.")
+
+    if selected_services:
+        today = datetime.today()
+        available_dates = get_overlapping_dates(selected_services, today)
+
+        if available_dates:
+            selected_service_date = st.selectbox("Select Available Date", available_dates)
+        else:
+            st.warning("No overlapping dates available within the next 14 days for the selected services.")
 
     submitted = st.form_submit_button("Submit Service Request")
 
@@ -70,9 +74,5 @@ with st.form("service_form"):
 
 # --- Display Tickets ---
 if st.session_state.tickets:
-    st.header("Scheduled Service Tickets")
-    df = pd.DataFrame(st.session_state.tickets)
-    st.dataframe(df, use_container_width=True)
-
-st.caption("This is a demo application. Payment integration and vendor portals would be added in full version.")
+    st.header("Scheduled Service Ticket
 
