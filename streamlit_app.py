@@ -3,7 +3,7 @@ import pandas as pd
 import uuid
 from datetime import datetime, timedelta
 import json
-import streamlit.components.v1 as components 
+import streamlit.components.v1 as components  # Required for calendar rendering
 
 # --- Initialization ---
 if "tickets" not in st.session_state:
@@ -42,19 +42,19 @@ with st.form("service_form"):
     storage_type = st.radio("Stored On:", ["Cradle", "Trailer"])
 
     selected_services = []
-    total_cost = 0
     st.subheader("Select Required Services (with pricing)")
     for vendor, info in vendors.items():
         label = f"{vendor} (${info['price']})"
         if st.checkbox(label, key=vendor):
             selected_services.append(vendor)
-            total_cost += info['price']
-
-    st.markdown(f"**Estimated Total Cost: ${total_cost:.2f}**")
 
     submitted = st.form_submit_button("Submit Service Request")
 
-# Render calendar and date selection outside the form to make it always visible
+# --- Real-time total cost ---
+total_cost = sum(vendors[v]["price"] for v in selected_services) if selected_services else 0
+st.markdown(f"**Estimated Total Cost: ${total_cost:.2f}**")
+
+# --- Calendar Rendering ---
 available_dates = []
 today = datetime.today()
 
@@ -63,7 +63,6 @@ if selected_services:
     st.subheader("Available Dates Calendar")
     selected = st.text_input("Selected Date (click a green date below)", key="selected_date")
 
-    # Enhanced calendar rendering
     available_dates_str = [d.strftime("%Y-%m-%d") for d in available_dates]
     selected_date_str = selected or ""
 
@@ -105,38 +104,10 @@ if selected_services:
     document.body.appendChild(container);
     </script>
     """
-    st.components.v1.html(calendar_html, height=400)
+    components.html(calendar_html, height=400)
 
-# Handle submission outside form block
+# --- Parse Selected Date ---
 selected_service_date = None
-if st.session_state.get("selected_date"):
-    try:
-        selected_service_date = datetime.strptime(st.session_state.get("selected_date"), "%Y-%m-%d")
-    except Exception:
-        selected_service_date = None
+if st.s
 
-if submitted:
-    if not boat_name or not boat_length or not storage_type or not selected_services or not selected_service_date:
-        st.error("Please complete all fields and ensure an available date is selected.")
-    else:
-        ticket = {
-            "Ticket ID": str(uuid.uuid4())[:8],
-            "Boat Name": boat_name,
-            "Length": boat_length,
-            "Storage Type": storage_type,
-            "Service Date": selected_service_date.strftime("%Y-%m-%d"),
-            "Vendors": selected_services,
-            "Total Cost": f"${total_cost:.2f}",
-            "Status": "Scheduled"
-        }
-        st.session_state.tickets.append(ticket)
-        st.success("Service ticket created successfully!")
-
-# --- Display Tickets ---
-if st.session_state.tickets:
-    st.header("Scheduled Service Tickets")
-    df = pd.DataFrame(st.session_state.tickets)
-    st.dataframe(df, use_container_width=True)
-
-st.caption("This is a demo application. Payment integration and vendor portals would be added in full version.")
 
