@@ -49,31 +49,84 @@ with st.form("service_form"):
             selected_services.append(vendor)
 
     available_dates = []
-    selected_service_date = None
     today = datetime.today()
 
     if selected_services:
         available_dates = get_overlapping_dates(selected_services, today)
         available_dates_str = [d.strftime("%Y-%m-%d") for d in available_dates]
-
         st.subheader("Available Dates Calendar")
-        calendar_html = f"""
-        <style>
-        .calendar-day {{
-            display:inline-block;
-            width:120px;
-            text-align:center;
-            padding:8px;
-            margin:4px;
-            border-radius:8px;
-            font-weight:bold;
-            font-size:14px;
-        }}
-        </style>
-        <div id='calendar-container'>
-        """
 
-        for i in range(30):
-            day = today + timedelta(days=i)
-            day_str = day.strftime("%Y-%m-%d")
-            if day_str in available_dates_str:
+        selected_date_input = st.text_input("Selected Date (click a green date below)", key="selected_date")
+
+        calendar_html = f"""
+        <script>
+        const available = {json.dumps(available_dates_str)};
+        const today = new Date();
+        const container = document.createElement('div');
+        container.style.fontFamily = 'sans-serif';
+
+        for (let i = 0; i < 30; i++) {{
+            const day = new Date();
+            day.setDate(today.getDate() + i);
+            const dayStr = day.toISOString().slice(0, 10);
+
+            const div = document.createElement('div');
+            div.textContent = dayStr;
+            div.style.padding = '8px';
+            div.style.margin = '4px';
+            div.style.display = 'inline-block';
+            div.style.borderRadius = '8px';
+            div.style.fontWeight = 'bold';
+            div.style.cursor = 'pointer';
+            div.style.backgroundColor = available.includes(dayStr) ? 'lightgreen' : '#f99';
+
+            if (available.includes(dayStr)) {{
+                div.onclick = () => {{
+                    const streamlitInput = window.parent.document.querySelectorAll('[data-testid="stTextInput"] input')[0];
+                    streamlitInput.value = dayStr;
+                    streamlitInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                }};
+            }}
+
+            container.appendChild(div);
+        }}
+
+        document.body.appendChild(container);
+        </script>
+        """
+        components.html(calendar_html, height=400)
+
+    submitted = st.form_submit_button("Submit Service Request")
+
+    selected_service_date = None
+    if st.session_state.get("selected_date"):
+        try:
+            selected_service_date = datetime.strptime(st.session_state.get("selected_date"), "%Y-%m-%d")
+        except Exception:
+            selected_service_date = None
+
+    if submitted:
+        if not boat_name or not boat_length or not storage_type or not selected_services or not selected_service_date:
+            st.error("Please complete all fields and ensure an available date is selected.")
+        else:
+            total_cost = sum(vendors[v]["price"] for v in selected_services)
+            ticket = {
+                "Ticket ID": str(uuid.uuid4())[:8],
+                "Boat Name": boat_name,
+                "Length": boat_length,
+                "Storage Type": storage_type,
+                "Service Date": selected_service_date.strftime("%Y-%m-%d"),
+                "Vendors": selected_services,
+                "Total Cost": f"${total_cost:.2f}",
+                "Status": "Scheduled"
+            }
+            st.session_state.tickets.append(ticket)
+            st.success("Service ticket created successfully!")
+
+# --- Display Tickets ---
+if st.session_state.tickets:
+    st.header("Scheduled Service Tickets")
+    df = pd.DataFrame(st.session_state.tickets)
+    st.dataframe(df, use_container_width=True)
+
+st.caption("This is a demo application. Payment integration and vendor portals would be added in full vers
