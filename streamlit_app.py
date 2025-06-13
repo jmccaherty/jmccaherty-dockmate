@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import uuid
 from datetime import datetime, timedelta
-import streamlit.components.v1 as components
+from interactive_calendar import render_interactive_calendar
 import json
 
 # --- Initialization ---
@@ -53,48 +53,9 @@ with st.form("service_form"):
 
     if selected_services:
         available_dates = get_overlapping_dates(selected_services, today)
-        available_dates_str = [d.strftime("%Y-%m-%d") for d in available_dates]
         st.subheader("Available Dates Calendar")
-
-        selected_date_input = st.text_input("Selected Date (click a green date below)", key="selected_date")
-
-        calendar_html = f"""
-        <script>
-        const available = {json.dumps(available_dates_str)};
-        const today = new Date();
-        const container = document.createElement('div');
-        container.style.fontFamily = 'sans-serif';
-
-        for (let i = 0; i < 30; i++) {{
-            const day = new Date();
-            day.setDate(today.getDate() + i);
-            const dayStr = day.toISOString().slice(0, 10);
-
-            const div = document.createElement('div');
-            div.textContent = dayStr;
-            div.style.padding = '8px';
-            div.style.margin = '4px';
-            div.style.display = 'inline-block';
-            div.style.borderRadius = '8px';
-            div.style.fontWeight = 'bold';
-            div.style.cursor = 'pointer';
-            div.style.backgroundColor = available.includes(dayStr) ? 'lightgreen' : '#f99';
-
-            if (available.includes(dayStr)) {{
-                div.onclick = () => {{
-                    const streamlitInput = window.parent.document.querySelectorAll('[data-testid="stTextInput"] input')[0];
-                    streamlitInput.value = dayStr;
-                    streamlitInput.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                }};
-            }}
-
-            container.appendChild(div);
-        }}
-
-        document.body.appendChild(container);
-        </script>
-        """
-        components.html(calendar_html, height=400)
+        st.text_input("Selected Date (click a green date below)", key="selected_date")
+        render_interactive_calendar(available_dates)
 
     submitted = st.form_submit_button("Submit Service Request")
 
@@ -129,5 +90,6 @@ if st.session_state.tickets:
     df = pd.DataFrame(st.session_state.tickets)
     st.dataframe(df, use_container_width=True)
 
-st.caption("""This is a demo application. Payment integration and vendor portals would be added in full version.""")
+st.caption("This is a demo application. Payment integration and vendor portals would be added in full version.")
+
 
