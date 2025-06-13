@@ -3,6 +3,7 @@ import pandas as pd
 import uuid
 from datetime import datetime, timedelta
 import json
+import streamlit.components.v1 as components 
 
 # --- Initialization ---
 if "tickets" not in st.session_state:
