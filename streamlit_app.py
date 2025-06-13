@@ -129,4 +129,5 @@ if st.session_state.tickets:
     df = pd.DataFrame(st.session_state.tickets)
     st.dataframe(df, use_container_width=True)
 
-st.caption("This is a demo application. Payment integration and vendor portals would be added in full vers
+st.caption("""This is a demo application. Payment integration and vendor portals would be added in full version.""")
+
