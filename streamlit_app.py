@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import uuid
 from datetime import datetime, timedelta
-from interactive_calendar import render_interactive_calendar
 import json
 
 # --- Initialization ---
