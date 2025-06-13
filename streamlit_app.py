@@ -45,19 +45,20 @@ with st.form("service_form"):
     st.subheader("Select Required Services (with pricing)")
     for vendor, info in vendors.items():
         label = f"{vendor} (${info['price']})"
-        if st.checkbox(label):
+        if st.checkbox(label, key=vendor):
             selected_services.append(vendor)
 
-    available_dates = []
-    today = datetime.today()
-
-    if selected_services:
-        available_dates = get_overlapping_dates(selected_services, today)
-        st.subheader("Available Dates Calendar")
-        st.text_input("Selected Date (click a green date below)", key="selected_date")
-        render_interactive_calendar(available_dates)
-
     submitted = st.form_submit_button("Submit Service Request")
+
+# Render calendar and date selection outside the form to make it always visible
+available_dates = []
+today = datetime.today()
+
+if selected_services:
+    available_dates = get_overlapping_dates(selected_services, today)
+    st.subheader("Available Dates Calendar")
+    st.text_input("Selected Date (click a green date below)", key="selected_date")
+    render_interactive_calendar(available_dates)
 
     selected_service_date = None
     if st.session_state.get("selected_date"):
@@ -91,5 +92,3 @@ if st.session_state.tickets:
     st.dataframe(df, use_container_width=True)
 
 st.caption("This is a demo application. Payment integration and vendor portals would be added in full version.")
-
-
