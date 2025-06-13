@@ -108,6 +108,34 @@ if selected_services:
 
 # --- Parse Selected Date ---
 selected_service_date = None
-if st.s
+if st.session_state.get("selected_date"):
+    try:
+        selected_service_date = datetime.strptime(st.session_state.get("selected_date"), "%Y-%m-%d")
+    except Exception:
+        selected_service_date = None
 
+# --- Final Submission ---
+if submitted:
+    if not boat_name or not boat_length or not storage_type or not selected_services or not selected_service_date:
+        st.error("Please complete all fields and ensure an available date is selected.")
+    else:
+        ticket = {
+            "Ticket ID": str(uuid.uuid4())[:8],
+            "Boat Name": boat_name,
+            "Length": boat_length,
+            "Storage Type": storage_type,
+            "Service Date": selected_service_date.strftime("%Y-%m-%d"),
+            "Vendors": selected_services,
+            "Total Cost": f"${total_cost:.2f}",
+            "Status": "Scheduled"
+        }
+        st.session_state.tickets.append(ticket)
+        st.success("Service ticket created successfully!")
 
+# --- Display Tickets ---
+if st.session_state.tickets:
+    st.header("Scheduled Service Tickets")
+    df = pd.DataFrame(st.session_state.tickets)
+    st.dataframe(df, use_container_width=True)
+
+st.caption("This is a demo application. Payment integration and vendor portals would be added in full version.")
